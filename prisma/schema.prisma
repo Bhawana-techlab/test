@@ -1,0 +1,234 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum PropertyStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SOLD
+  INACTIVE
+}
+
+enum PropertyType {
+  FLAT
+  INDEPENDENT_HOUSE
+  VILLA
+  PLOT
+  COMMERCIAL
+  SHOP
+  OFFICE
+  AGRICULTURAL
+}
+
+enum FurnishingStatus {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum LeadStatus {
+  FRESH
+  CONTACTED
+  VISIT_SCHEDULED
+  VISITED
+  NEGOTIATION
+  DEAL_DONE
+  NOT_INTERESTED
+  LOST
+}
+
+enum ListingType {
+  SELL
+  RENT
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String?
+  password    String
+  role        Role     @default(USER)
+  avatar      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  properties  Property[]
+  leads       Lead[]       @relation("AgentLeads")
+  inquiries   Inquiry[]
+  savedProps  SavedProperty[]
+
+  @@map("users")
+}
+
+model Property {
+  id              String          @id @default(cuid())
+  title           String
+  description     String          @db.Text
+  price           Float
+  priceNegotiable Boolean         @default(false)
+  propertyType    PropertyType
+  listingType     ListingType     @default(SELL)
+  status          PropertyStatus  @default(PENDING)
+  furnishing      FurnishingStatus @default(UNFURNISHED)
+
+  // Location
+  address         String
+  city            String
+  sector          String?
+  locality        String?
+  pincode         String?
+  latitude        Float?
+  longitude       Float?
+
+  // Size
+  area            Float           // in sq ft
+  areaUnit        String          @default("sqft")
+  bedrooms        Int?
+  bathrooms       Int?
+  balconies       Int?
+  floors          Int?
+  totalFloors     Int?
+  parking         Int?
+
+  // Amenities (stored as JSON array)
+  amenities       String[]
+  facing          String?
+
+  // Media
+  images          PropertyImage[]
+  coverImage      String?
+
+  // Relations
+  sellerId        String
+  seller          User            @relation(fields: [sellerId], references: [id])
+  leads           Lead[]
+  inquiries       Inquiry[]
+  savedBy         SavedProperty[]
+
+  // SEO
+  slug            String          @unique
+  featured        Boolean         @default(false)
+
+  // Meta
+  views           Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("properties")
+}
+
+model PropertyImage {
+  id          String   @id @default(cuid())
+  url         String
+  publicId    String?
+  alt         String?
+  order       Int      @default(0)
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@map("property_images")
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  // Buyer info
+  name            String
+  phone           String
+  email           String?
+  address         String?
+
+  // Property interest
+  requirement     String?
+  location        String?
+  budget          String?
+  propertyType    String?
+
+  // Status tracking (like your spreadsheet)
+  status          LeadStatus @default(FRESH)
+  source          String     @default("website")
+  notes           String?    @db.Text
+
+  // Follow up
+  followUpDate    DateTime?
+  lastContactedAt DateTime?
+
+  // Visit
+  visitDate       DateTime?
+  visitStatus     String?
+  visitDescription String?   @db.Text
+
+  // Project pitched
+  projectPitched  String?
+
+  // Relations
+  propertyId      String?
+  property        Property? @relation(fields: [propertyId], references: [id])
+  agentId         String?
+  agent           User?     @relation("AgentLeads", fields: [agentId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("leads")
+}
+
+model Inquiry {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  message     String?  @db.Text
+  budget      String?
+
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("inquiries")
+}
+
+model SavedProperty {
+  id          String   @id @default(cuid())
+  userId      String
+  propertyId  String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@map("saved_properties")
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String?
+  coverImage  String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("blogs")
+}
