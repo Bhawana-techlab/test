@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer'
 import InquiryForm from '@/components/forms/InquiryForm'
 import { prisma } from '@/lib/prisma'
 import { formatPrice, formatDate } from '@/lib/utils'
-import { Bed, Bath, Maximize, MapPin, Phone, Calendar, Eye, Share2, Heart, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Bed, Bath, Maximize, MapPin, Phone, Eye, CheckCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 
 interface Props { params: { id: string } }
@@ -50,11 +50,25 @@ export default async function PropertyDetailPage({ params }: Props) {
     ? property.images.map(i => i.url)
     : property.coverImage ? [property.coverImage] : ['/placeholder-property.jpg']
 
+  const details: [string, string][] = [
+    ['Property Type', typeLabel[property.propertyType]],
+    ['Listing Type', property.listingType === 'SELL' ? 'For Sale' : 'For Rent'],
+    ['Furnishing', property.furnishing?.replace(/_/g, ' ') ?? ''],
+    ['Area', `${property.area} ${property.areaUnit}`],
+    ['City', property.city],
+    ['Listed On', formatDate(property.createdAt)],
+  ]
+
+  if (property.bedrooms) details.push(['Bedrooms', `${property.bedrooms} BHK`])
+  if (property.bathrooms) details.push(['Bathrooms', String(property.bathrooms)])
+  if (property.parking) details.push(['Parking', String(property.parking)])
+  if (property.facing) details.push(['Facing', property.facing])
+  if (property.pincode) details.push(['Pincode', property.pincode])
+
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        {/* Breadcrumb */}
         <div className="bg-white border-b border-gray-100">
           <div className="container-app py-3 flex items-center gap-2 text-sm text-gray-500">
             <Link href="/" className="hover:text-primary-600">Home</Link>
@@ -67,8 +81,8 @@ export default async function PropertyDetailPage({ params }: Props) {
 
         <div className="container-app py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left: Main Content */}
             <div className="lg:col-span-2 space-y-6">
+
               {/* Image Gallery */}
               <div className="bg-white rounded-2xl overflow-hidden shadow-card">
                 <div className="relative h-80 md:h-96">
@@ -117,7 +131,6 @@ export default async function PropertyDetailPage({ params }: Props) {
                   </div>
                 </div>
 
-                {/* Key Specs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
                   {property.bedrooms && (
                     <div className="text-center">
@@ -156,19 +169,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl p-6 shadow-card">
                 <h2 className="font-bold text-gray-900 text-lg mb-4">Property Details</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  {[
-                    ['Property Type', typeLabel[property.propertyType]],
-                    ['Listing Type', property.listingType === 'SELL' ? 'For Sale' : 'For Rent'],
-                    ['Furnishing', property.furnishing?.replace(/_/g, ' ')],
-                    ['Area', `${property.area} ${property.areaUnit}`],
-                    property.bedrooms ? ['Bedrooms', `${property.bedrooms} BHK`] : null,
-                    property.bathrooms ? ['Bathrooms', String(property.bathrooms)] : null,
-                    property.parking ? ['Parking', String(property.parking)] : null,
-                    property.facing ? ['Facing', property.facing] : null,
-                    ['City', property.city],
-                    property.pincode ? ['Pincode', property.pincode] : null,
-                    ['Listed On', formatDate(property.createdAt)],
-                  ].filter(Boolean).map(([key, val]) => (
+                  {details.map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 py-2 border-b border-gray-50">
                       <span className="text-gray-500 text-sm w-32 flex-shrink-0">{key}</span>
                       <span className="font-medium text-gray-900 text-sm">{val}</span>
@@ -192,9 +193,8 @@ export default async function PropertyDetailPage({ params }: Props) {
               )}
             </div>
 
-            {/* Right: Sidebar */}
+            {/* Right Sidebar */}
             <div className="space-y-4">
-              {/* Seller Info */}
               {property.seller && (
                 <div className="bg-white rounded-2xl p-5 shadow-card">
                   <h3 className="font-semibold text-gray-900 mb-4">Listed By</h3>
@@ -215,8 +215,6 @@ export default async function PropertyDetailPage({ params }: Props) {
                   )}
                 </div>
               )}
-
-              {/* Inquiry Form */}
               <InquiryForm propertyId={property.id} propertyTitle={property.title} />
             </div>
           </div>

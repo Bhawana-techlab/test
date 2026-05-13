@@ -3,8 +3,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export async function POST(req: NextRequest) {
-  try {
-    const user = await getUserFromRequest(req)
+  try { const user = await getUserFromRequest(req)
     if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     if (user.role !== 'SELLER' && user.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Sellers only' }, { status: 403 })
@@ -36,4 +35,3 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export const config = { api: { bodyParser: false } }

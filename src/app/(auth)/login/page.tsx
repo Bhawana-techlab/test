@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export default function LoginPage() {
+function LoginForm() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -63,24 +63,19 @@ export default function LoginPage() {
                 <Link href="/forgot-password" className="text-sm text-primary-600 hover:underline">Forgot?</Link>
               </div>
               <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={form.password}
+                <input type={showPass ? 'text' : 'password'} value={form.password}
                   onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  required placeholder="••••••••" className="input-field pr-10"
-                />
+                  required placeholder="••••••••" className="input-field pr-10" />
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
-
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 flex items-center justify-center gap-2">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</> : 'Sign In'}
             </button>
           </form>
-
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}
             <Link href="/register" className="text-primary-600 font-medium hover:underline">Register</Link>
@@ -88,5 +83,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
